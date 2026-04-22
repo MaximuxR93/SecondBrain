@@ -3,6 +3,7 @@ import { create } from "zustand";
 type Document = {
   id: string;
   name: string;
+  content: string;
 };
 
 type Message = {
@@ -13,18 +14,21 @@ type Message = {
 type Store = {
   documents: Document[];
   selectedDoc: Document | null;
-  messages: Message[];
+
+  chatHistory: Record<string, Message[]>;
 
   addDocument: (doc: Document) => void;
   selectDoc: (doc: Document) => void;
-  addMessage: (msg: Message) => void;
-  clearMessages: () => void;
+
+  addMessage: (docId: string, msg: Message) => void;
+  getMessages: (docId: string) => Message[];
+  updateLastMessage: (docId: string, content: string) => void;
 };
 
-export const useStore = create<Store>((set) => ({
+export const useStore = create<Store>((set, get) => ({
   documents: [],
   selectedDoc: null,
-  messages: [],
+  chatHistory: {},
 
   addDocument: (doc) =>
     set((state) => ({
@@ -33,10 +37,35 @@ export const useStore = create<Store>((set) => ({
 
   selectDoc: (doc) => set({ selectedDoc: doc }),
 
-  addMessage: (msg) =>
+  addMessage: (docId, msg) =>
     set((state) => ({
-      messages: [...state.messages, msg],
+      chatHistory: {
+        ...state.chatHistory,
+        [docId]: [...(state.chatHistory[docId] || []), msg],
+      },
     })),
 
-  clearMessages: () => set({ messages: [] }),
+  getMessages: (docId) => {
+    return get().chatHistory[docId] || [];
+  },
+
+  updateLastMessage: (docId, content) =>
+    set((state) => {
+      const msgs = state.chatHistory[docId] || [];
+
+      if (msgs.length === 0) return state;
+
+      const updated = [...msgs];
+      updated[updated.length - 1] = {
+        role: "assistant",
+        content,
+      };
+
+      return {
+        chatHistory: {
+          ...state.chatHistory,
+          [docId]: updated,
+        },
+      };
+    }),
 }));

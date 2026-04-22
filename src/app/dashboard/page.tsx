@@ -1,35 +1,45 @@
 "use client";
 
+import Link from "next/link";
 import { useStore } from "@/store/useStore";
 
-export default function Documents() {
-  const { documents, addDocument, selectDoc } = useStore();
-
-  const handleAdd = () => {
-    const newDoc = {
-      id: Date.now().toString(),
-      name: "Sample Doc " + documents.length,
-    };
-    addDocument(newDoc);
-  };
+export default function Dashboard() {
+  const { documents } = useStore();
 
   return (
-    <div>
-      <h1 className="text-xl font-bold mb-4">Documents</h1>
+    <div className="max-w-5xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
 
-      <button
-        onClick={handleAdd}
-        className="bg-white text-black px-4 py-2 rounded"
-      >
-        Add Document
-      </button>
+      {/* Quick Actions */}
+      <div className="flex gap-4 mb-6">
+        <Link
+          href="/documents"
+          className="bg-white text-black px-4 py-2 rounded-lg"
+        >
+          Upload Document
+        </Link>
 
-      <div className="mt-4 space-y-2">
+        <Link
+          href="/chat"
+          className="bg-zinc-800 px-4 py-2 rounded-lg"
+        >
+          Open Chat
+        </Link>
+      </div>
+
+      {/* Stats */}
+      <div className="mb-6">
+        <p className="text-zinc-400">
+          Total Documents: {documents.length}
+        </p>
+      </div>
+
+      {/* Recent Docs */}
+      <div className="space-y-3">
         {documents.map((doc) => (
           <div
             key={doc.id}
-            onClick={() => selectDoc(doc)}
-            className="p-3 bg-zinc-800 rounded cursor-pointer"
+            className="p-3 bg-zinc-900 rounded-lg"
           >
             {doc.name}
           </div>
