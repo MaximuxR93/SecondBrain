@@ -23,11 +23,15 @@ type Store = {
   addMessage: (docId: string, msg: Message) => void;
   getMessages: (docId: string) => Message[];
   updateLastMessage: (docId: string, content: string) => void;
+
+  clearMessages: (docId: string) => void;
 };
 
 export const useStore = create<Store>((set, get) => ({
   documents: [],
   selectedDoc: null,
+
+  // 🔥 IMPORTANT: always initialize as empty object
   chatHistory: {},
 
   addDocument: (doc) =>
@@ -37,6 +41,7 @@ export const useStore = create<Store>((set, get) => ({
 
   selectDoc: (doc) => set({ selectedDoc: doc }),
 
+  // ✅ Safe message add
   addMessage: (docId, msg) =>
     set((state) => ({
       chatHistory: {
@@ -45,10 +50,13 @@ export const useStore = create<Store>((set, get) => ({
       },
     })),
 
+  // ✅ Always returns array (never undefined)
   getMessages: (docId) => {
-    return get().chatHistory[docId] || [];
+    const state = get();
+    return state.chatHistory[docId] || [];
   },
 
+  // ✅ Update last assistant message
   updateLastMessage: (docId, content) =>
     set((state) => {
       const msgs = state.chatHistory[docId] || [];
@@ -68,4 +76,13 @@ export const useStore = create<Store>((set, get) => ({
         },
       };
     }),
+
+  // 🧹 Clear chat (UX feature)
+  clearMessages: (docId) =>
+    set((state) => ({
+      chatHistory: {
+        ...state.chatHistory,
+        [docId]: [],
+      },
+    })),
 }));
