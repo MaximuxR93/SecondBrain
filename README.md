@@ -25,18 +25,18 @@ SecondBrain is a full-stack AI application that allows users to upload documents
 ## 🖼️ Screenshots
 
 ### 📄 Upload & Document Handling
-![Upload](./assets/screen1.png)
+![Upload](./assets/screen2.png)
 
-### 💬 Chat Interface
-![Chat](./assets/screen2.png)
+### 💬 upload interface
+![Chat](./assets/screen3.png)
 
 ### ⚡ Streaming AI Response
-![Streaming](./assets/screen3.png)
+![Streaming](./assets/screen1.png)
 
-### 📌 Source Attribution
+### 📌 Ai Response 
 ![Sources](./assets/screen4.png)
 
-### 🧠 AI Insights Output
+### 🧠 AI Insights Key Output
 ![Insights](./assets/screen5.png)
 
 ---
