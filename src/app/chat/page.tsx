@@ -135,7 +135,7 @@ for (let i = 0; i < words.length; i++) {
   };
 
   return (
-    <div className="flex flex-col h-[85vh] max-w-5xl mx-auto bg-zinc-950/80 rounded-2xl border border-zinc-800/80 shadow-2xl overflow-hidden mt-4">
+    <div className="flex flex-col h-[calc(100vh-8rem)] w-full mx-auto bg-zinc-950/80 rounded-2xl border border-zinc-800/80 shadow-2xl overflow-hidden">
       {/* Header */}
       <div className="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800/80 p-5 flex items-center justify-between sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-4">
@@ -287,7 +287,7 @@ for (let i = 0; i < words.length; i++) {
             e.preventDefault();
             handleSend();
           }}
-          className="flex gap-3 max-w-4xl mx-auto relative group"
+          className="flex gap-3 max-w-6xl w-full mx-auto relative group"
         >
           <input
             value={input}
