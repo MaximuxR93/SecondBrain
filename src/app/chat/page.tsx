@@ -5,6 +5,8 @@ import { useStore } from "@/store/useStore";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Bot, User, Sparkles, Send, BrainCircuit, BarChart3, FileText } from "lucide-react";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 export default function Chat() {
   const { selectedDoc, getMessages, addMessage } = useStore();
@@ -17,18 +19,38 @@ export default function Chat() {
     process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
 
   // ✅ Always get fresh context from store (ROOT FIX)
-  const getContext = () => {
-    const state = useStore.getState();
+  // 🔥 Helper: split text into chunks
+const splitIntoChunks = (text: string, size = 800) => {
+  const chunks = [];
+  for (let i = 0; i < text.length; i += size) {
+    chunks.push(text.slice(i, i + size));
+  }
+  return chunks;
+};
 
-    const docs = state.documents;
-    const selected = state.selectedDoc;
+const getContext = (query: string = "") => {
+  const state = useStore.getState();
+  const docs = state.documents;
+  const selected = state.selectedDoc;
 
-    if (!selected) return "";
+  if (!selected) return "";
 
-    const fullDoc = docs.find((d) => d.id === selected.id);
+  const fullDoc = docs.find((d) => d.id === selected.id);
+  if (!fullDoc?.content) return "";
 
-    return fullDoc?.content || "";
-  };
+  const chunks = splitIntoChunks(fullDoc.content);
+
+  // 🔥 simple relevance filtering
+  const relevantChunks = query ? chunks.filter((chunk) =>
+    chunk.toLowerCase().includes(query.toLowerCase())
+  ) : [];
+
+  // fallback if nothing matches
+  const finalChunks =
+    relevantChunks.length > 0 ? relevantChunks.slice(0, 3) : chunks.slice(0, 2);
+
+  return finalChunks.join("\n\n");
+};
 
   // ✅ Messages per document
   const messages = selectedDoc
@@ -48,7 +70,7 @@ export default function Chat() {
     const message = customInput || input;
     if (!message.trim()) return;
 
-    const context = getContext();
+    const context = getContext(message);
 
     console.log("📤 CONTEXT LENGTH:", context.length);
 
@@ -78,10 +100,28 @@ export default function Chat() {
         throw new Error(data.error || "AI failed");
       }
 
-      addMessage(selectedDoc.id, {
-        role: "assistant",
-        content: data.reply,
-      });
+      // Step 1: add empty assistant message (same UI, no change)
+addMessage(selectedDoc.id, {
+  role: "assistant",
+  content: "",
+});
+
+// Step 2: simulate streaming WITHOUT affecting UI
+let currentText = "";
+const words = data.reply.split(" ");
+
+for (let i = 0; i < words.length; i++) {
+  currentText += words[i] + " ";
+
+  // update last message (this uses your existing store function)
+  useStore.getState().updateLastMessage(
+    selectedDoc.id,
+    currentText
+  );
+
+  // smooth typing speed
+  await new Promise((resolve) => setTimeout(resolve, 20));
+}
     } catch (err) {
       console.error("❌ AI error:", err);
 
@@ -191,10 +231,30 @@ export default function Chat() {
                     h1: ({node, ...props}) => <h1 className="text-xl font-bold mt-6 mb-4 text-white border-b border-zinc-800/80 pb-2 flex items-center gap-2" {...props} />,
                     h2: ({node, ...props}) => <h2 className="text-lg font-bold mt-5 mb-3 text-indigo-50" {...props} />,
                     h3: ({node, ...props}) => <h3 className="text-base font-semibold mt-4 mb-2 text-zinc-200" {...props} />,
-                    code: ({node, inline, ...props}: any) => 
-                      inline 
-                        ? <code className="bg-zinc-800/80 text-indigo-300 px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-zinc-700/50" {...props} />
-                        : <code className="block bg-zinc-950 p-4 rounded-xl text-[13px] font-mono overflow-x-auto border border-zinc-800 shadow-inner" {...props} />,
+                    code({node, inline, className, children, ...props}: any) {
+                      const match = /language-(\w+)/.exec(className || '');
+                      return !inline && match ? (
+                        <SyntaxHighlighter
+                          style={vscDarkPlus as any}
+                          language={match[1]}
+                          PreTag="div"
+                          customStyle={{
+                            margin: '1.5rem 0',
+                            borderRadius: '0.75rem',
+                            border: '1px solid rgba(39, 39, 42, 0.8)',
+                            background: '#09090b',
+                            fontSize: '13px'
+                          }}
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
+                      ) : (
+                        <code className={`${inline ? "bg-zinc-800/80 text-indigo-300 px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-zinc-700/50" : "block bg-zinc-950 p-4 rounded-xl text-[13px] font-mono overflow-x-auto border border-zinc-800 shadow-inner my-4"} ${className || ""}`} {...props}>
+                          {children}
+                        </code>
+                      )
+                    },
                   }}
                 >
                   {msg.content}
